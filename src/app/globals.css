@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-linea;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-sillon text-crema font-sans antialiased;
+    /* Respeta el area segura de los telefonos con notch. */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Regla 03: todo numero va en monoespaciada y alineado a la derecha. */
+  .num {
+    @apply font-mono tabular-nums text-right;
+  }
+
+  /* Etiqueta de seccion: mayusculas espaciadas, ceniza. */
+  .etiqueta {
+    @apply font-sans text-[11px] uppercase tracking-etiqueta text-ceniza;
+  }
+
+  h1, h2, h3 {
+    @apply font-display font-normal;
+  }
+
+  /* Foco visible y consistente en toda la app (accesibilidad + auditoria). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-oro ring-offset-2 ring-offset-sillon;
+  }
+
+  /* Scrollbar sobria, en la paleta. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0F0E0D; }
+  ::-webkit-scrollbar-thumb { background: #38352F; border: 2px solid #0F0E0D; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a463f; }
+
+  /* Inputs numericos sin flechas: los montos se escriben, no se pulsan. */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Separacion por lineas de 1px, nunca por sombras. */
+  .panel {
+    @apply border border-linea bg-carbon;
+  }
+
+  .fila-lista {
+    @apply border-b border-linea last:border-b-0;
+  }
+}
