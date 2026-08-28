@@ -3,6 +3,7 @@ import { esquemaBarbero } from "@/lib/validacion";
 import { LIMITES } from "@/lib/rate-limit";
 import { aplicarLimite, error, leerBody, ok, ERROR_INTERNO, registrarFalla } from "@/lib/api";
 import { horaAMinutos } from "@/lib/format";
+import { guardarInvitacion } from "@/lib/invitaciones";
 
 /** Alta de un barbero del salon. */
 export async function POST(request: Request) {
@@ -31,16 +32,28 @@ export async function POST(request: Request) {
       hora_desde: datos.horaDesde,
       hora_hasta: datos.horaHasta,
       activo: datos.activo,
-      // Invitacion: al entrar con Google con ese correo, el barbero queda
-      // vinculado a esta ficha (ver funcion aceptar_invitaciones).
-      email_invitacion: datos.email ?? null,
     })
-    .select("id, nombre, descripcion, dias_trabajo, hora_desde, hora_hasta, activo, user_id, email_invitacion")
+    .select("id, nombre, descripcion, dias_trabajo, hora_desde, hora_hasta, activo, user_id")
     .single();
 
   if (falla || !data) {
     registrarFalla("POST /api/panel/barberos", falla);
     return ERROR_INTERNO();
+  }
+
+  // Invitacion: al entrar con Google con ese correo, la persona queda
+  // vinculada a esta ficha (ver funcion aceptar_invitaciones).
+  if (datos.email) {
+    const invitacion = await guardarInvitacion(ctx.supabase, {
+      tenantId: ctx.tenant.id,
+      email: datos.email,
+      rol: "barbero",
+      barberId: data.id as string,
+      creadoPor: ctx.usuario.id,
+    });
+    if (!invitacion.ok) {
+      return ok({ ...data, avisoInvitacion: invitacion.motivo }, 201);
+    }
   }
 
   return ok(data, 201);

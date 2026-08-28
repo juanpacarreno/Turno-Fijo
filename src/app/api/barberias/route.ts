@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
   const { error: fallaMiembro } = await admin
     .from("tenant_members")
-    .insert({ tenant_id: tenant.id, user_id: usuario.id, rol: "dueno" });
+    .insert({ tenant_id: tenant.id, user_id: usuario.id, rol: "dueno", email: usuario.email });
 
   if (fallaMiembro) {
     // Sin membresia el tenant queda huerfano: se revierte.

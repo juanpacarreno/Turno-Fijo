@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ZodError, type ZodSchema } from "zod";
+import { ZodError, type ZodTypeAny, type output as SalidaZod } from "zod";
 import { limitar, ipDeRequest, type ResultadoLimite } from "@/lib/rate-limit";
 
 /**
@@ -68,10 +68,13 @@ export function aplicarLimite(
 const TAMANO_MAXIMO_BODY = 16 * 1024; // 16 KB: ningun payload legitimo lo supera
 
 /** Lee y valida el body JSON. Devuelve datos o una respuesta de error lista. */
-export async function leerBody<T>(
+export async function leerBody<E extends ZodTypeAny>(
   request: Request,
-  esquema: ZodSchema<T>,
-): Promise<{ datos: T; respuesta?: never } | { datos?: never; respuesta: NextResponse }> {
+  esquema: E,
+): Promise<
+  | { datos: SalidaZod<E>; respuesta?: never }
+  | { datos?: never; respuesta: NextResponse }
+> {
   const tipo = request.headers.get("content-type") ?? "";
   if (!tipo.includes("application/json")) {
     return { respuesta: error("Formato de pedido invalido.", 415) };

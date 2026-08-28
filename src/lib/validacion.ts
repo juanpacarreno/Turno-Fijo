@@ -120,8 +120,12 @@ export const esquemaAltaBarberia = z.object({
   telefono,
 });
 
-/** Correo de invitacion: opcional, normalizado a minusculas. */
-export const correoOpcional = z.preprocess(
+/**
+ * Correo de invitacion: opcional, normalizado a minusculas.
+ * El tipo va anotado a mano porque `z.preprocess` con entrada `unknown` no
+ * infiere solo el tipo de salida.
+ */
+export const correoOpcional: z.ZodType<string | undefined, z.ZodTypeDef, unknown> = z.preprocess(
   (v) => {
     const limpio = sanearTexto(v).toLowerCase();
     return limpio === "" ? undefined : limpio;

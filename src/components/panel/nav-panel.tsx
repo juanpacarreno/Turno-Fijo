@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Scissors, Wallet, Users, UserRound } from "lucide-react";
+import { CalendarDays, Scissors, Wallet, Users, UserRound, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SECCIONES = [
@@ -11,6 +11,7 @@ const SECCIONES = [
   { href: "/panel/caja", etiqueta: "Caja", Icono: Wallet, soloDuenio: true },
   { href: "/panel/clientes", etiqueta: "Clientes", Icono: Users, soloDuenio: true },
   { href: "/panel/barberos", etiqueta: "Barberos", Icono: UserRound, soloDuenio: true },
+  { href: "/panel/equipo", etiqueta: "Equipo", Icono: KeyRound, soloDuenio: true },
 ];
 
 /** El barbero solo tiene su agenda; el resto es del dueno. */

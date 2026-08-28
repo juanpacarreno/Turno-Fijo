@@ -22,7 +22,9 @@ Level Security en Postgres, no sólo por filtros de aplicación.
    - [`20260826000001_esquema_inicial.sql`](supabase/migrations/20260826000001_esquema_inicial.sql)
      — tablas, triggers, funciones y todas las políticas de RLS.
    - [`20260827000002_cuentas_de_barbero.sql`](supabase/migrations/20260827000002_cuentas_de_barbero.sql)
-     — roles dueño/barbero, invitación por correo y políticas por rol.
+     — roles dueño/barbero y políticas por rol.
+   - [`20260827000003_equipo_e_invitaciones.sql`](supabase/migrations/20260827000003_equipo_e_invitaciones.sql)
+     — tabla de invitaciones, socios, y baja de miembros.
 
    (Con la CLI: `supabase db push`.)
 3. En **Project Settings → API** copiá `URL`, `anon key` y `service_role key`.
@@ -161,37 +163,42 @@ Google → recibe el comprobante en pantalla y por correo.
 que se hicieron, elige efectivo / transferencia / tarjeta y cobra. El total sale
 de la suma de los servicios; también puede marcar *no vino* o cancelar.
 
-### Cuentas de barbero
+### Equipo: socios y barberos
 
-Hay dos roles, guardados en `tenant_members.rol`:
+Una barbería puede tener **varios dueños** (socios) y varios barberos. El rol
+vive en `tenant_members.rol`:
 
-| | Dueño | Barbero |
+| | Socio (`dueno`) | Barbero |
 | --- | --- | --- |
 | Agenda | Todo el salón | **Sólo sus propios turnos** |
 | Cobrar, adicionales, no vino | Sí | Sí, en sus turnos |
 | Fichas de cliente | Todas las del salón | Sólo las de quienes atiende |
 | Caja del mes | Sí | No |
 | Precios y servicios | Sí | No (los lee para cargar adicionales) |
-| Barberos | Sí | No |
+| Barberos y equipo | Sí | No |
 | Página pública de reservas | Sí | No |
 
-**Cómo invitar a un barbero:** en *Barberos*, al crear o editar la ficha, cargá
-el **correo de Google** con el que esa persona va a entrar. La ficha queda como
-*Invitado*. Cuando esa persona entra a la app con Google, su cuenta se vincula
-sola a esa ficha y pasa a ver su agenda. La verificación se hace contra el
-correo del token de Google, nunca contra algo que mande el navegador.
+Todos los socios son equivalentes: no hay un "dueño original" con más poder.
+
+**Invitar** (sección *Equipo*, sólo visible para socios): escribís el correo de
+Google de la persona, elegís el rol y, si atiende, la ficha de barbero que le
+corresponde. Queda como invitación pendiente hasta que esa persona entra con
+Google; ahí se le crea la membresía y, si había ficha, queda vinculada.
+
+- Un **socio** puede ir sin ficha (sólo administra) o con ficha (además atiende).
+- Un **barbero** necesita ficha: es lo que define qué turnos ve.
+- La verificación se hace contra el correo del token de Google, nunca contra
+  algo que mande el navegador (`aceptar_invitaciones()`, `security definer`).
+- Al crear o editar una ficha en *Barberos* también podés cargar el correo: es
+  un atajo que crea la misma invitación con rol barbero.
+
+**Quitar acceso**: en *Equipo*, botón *Quitar*. Un socio no puede quitarse a sí
+mismo, y un trigger impide que la barbería se quede sin ningún socio. Al quitar
+a alguien, su ficha de barbero queda libre para invitar a otra persona; los
+turnos históricos no se tocan.
 
 Conviene invitar **antes** de que la persona entre por primera vez: si entra sin
-invitación pendiente, la app la va a llevar a registrar su propia barbería.
-
-Limitaciones conocidas hoy: no hay pantalla para revocar el acceso de un barbero
-ya vinculado (se hace poniendo `barbers.user_id` en `null` y borrando su fila de
-`tenant_members`), y un barbero puede leer por API el correo de invitación
-pendiente de un compañero del mismo salón.
-
-**Caja**: `/panel/caja` muestra el mes por medio de pago sobre lo realmente
-cobrado, turnos completados, ausencias, cancelados, ticket promedio, cuánto
-aportaron los adicionales y qué servicios se vendieron más.
+invitación pendiente, la app la lleva a registrar su propia barbería.
 
 ---
 
