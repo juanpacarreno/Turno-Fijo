@@ -114,7 +114,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | cliente + servidor | URL del proyecto |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | cliente + servidor | Clave pública; toda la autorización la hace RLS |
 | `SUPABASE_SERVICE_ROLE_KEY` | **sólo servidor** | Alta de barbería y lectura de horarios ocupados |
-| `NEXT_PUBLIC_SITE_URL` | cliente + servidor | Base para links del mail |
+| `SITE_URL` | **sólo servidor** | Base para los links del mail y del alta |
 | `RESEND_API_KEY` / `EMAIL_FROM` | sólo servidor | Envío de confirmaciones |
 
 `SUPABASE_SERVICE_ROLE_KEY` **nunca** lleva el prefijo `NEXT_PUBLIC_`: bypassea
@@ -133,7 +133,7 @@ npm run dev
 1. Importá el repositorio en Vercel.
 2. Cargá las cinco variables en **Settings → Environment Variables**
    (`SUPABASE_SERVICE_ROLE_KEY` sin `NEXT_PUBLIC_`).
-3. Actualizá `NEXT_PUBLIC_SITE_URL` y las Redirect URLs de Supabase con el dominio final.
+3. Actualizá `SITE_URL` y las Redirect URLs de Supabase con el dominio final.
 4. Agregá el dominio a *Orígenes autorizados de JavaScript* en Google Cloud.
 5. **Recién ahora publicá la app de Google** (paso 1.2.3). En *Branding* completá:
    página de inicio `https://tu-dominio`, política de privacidad

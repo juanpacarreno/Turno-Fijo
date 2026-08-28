@@ -19,8 +19,12 @@ export const env = {
   /** Solo servidor. Nunca importar desde un componente cliente. */
   supabaseServiceRoleKey: () =>
     requerido("SUPABASE_SERVICE_ROLE_KEY", process.env.SUPABASE_SERVICE_ROLE_KEY),
-  siteUrl: () =>
-    (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, ""),
+  /**
+   * URL publica del sitio. Va SIN prefijo NEXT_PUBLIC_ a proposito: solo la
+   * usan el mail y la pagina de registro, ambos del lado del servidor. El
+   * navegador arma sus propias URLs con window.location.origin.
+   */
+  siteUrl: () => (process.env.SITE_URL || "http://localhost:3000").replace(/\/+$/, ""),
   resendApiKey: () => process.env.RESEND_API_KEY || "",
   emailFrom: () => process.env.EMAIL_FROM || "Turno Fijo <turnos@example.com>",
 };
