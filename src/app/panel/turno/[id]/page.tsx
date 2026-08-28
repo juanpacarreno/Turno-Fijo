@@ -39,25 +39,26 @@ export default async function PaginaTurno({ params }: { params: Promise<{ id: st
   const { supabase, tenant } = await requerirPanel(`/panel/turno/${id}`);
 
   // Doble filtro: politica de RLS + tenant_id explicito.
-  const { data } = await supabase
-    .from("appointments")
-    .select(
-      "id, codigo, fecha, hora_desde, hora_hasta, estado, medio_pago, total_cent, nota, barbers(nombre), clients(nombre, email), appointment_services(id, service_id, nombre, precio_cent, principal)",
-    )
-    .eq("id", id)
-    .eq("tenant_id", tenant.id)
-    .maybeSingle();
+  const [{ data }, { data: catalogo }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select(
+        "id, codigo, fecha, hora_desde, hora_hasta, estado, medio_pago, total_cent, nota, barbers(nombre), clients(nombre, email), appointment_services(id, service_id, nombre, precio_cent, principal)",
+      )
+      .eq("id", id)
+      .eq("tenant_id", tenant.id)
+      .maybeSingle(),
+    // Catalogo para cargar adicionales en el sillon.
+    supabase
+      .from("services")
+      .select("id, nombre, precio_cent, duracion_min")
+      .eq("tenant_id", tenant.id)
+      .eq("activo", true)
+      .order("precio_cent", { ascending: true }),
+  ]);
 
   if (!data) notFound();
   const turno = data as unknown as TurnoDetalle;
-
-  // Catalogo para cargar adicionales en el sillon.
-  const { data: catalogo } = await supabase
-    .from("services")
-    .select("id, nombre, precio_cent, duracion_min")
-    .eq("tenant_id", tenant.id)
-    .eq("activo", true)
-    .order("precio_cent", { ascending: true });
 
   const principal = turno.appointment_services.find((s) => s.principal);
   const adicionalesActuales = turno.appointment_services.filter((s) => !s.principal);

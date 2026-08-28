@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -15,12 +16,21 @@ export type Sesion = {
   usuario: User;
 };
 
-/** Devuelve el usuario autenticado o null. Valida el JWT contra Supabase. */
-export async function obtenerUsuario(): Promise<{ supabase: SupabaseClient; usuario: User | null }> {
-  const supabase = await crearClienteServidor();
-  const { data } = await supabase.auth.getUser();
-  return { supabase, usuario: data.user ?? null };
-}
+/**
+ * Devuelve el usuario autenticado o null. Valida el JWT contra Supabase.
+ *
+ * Envuelto en `cache()` de React: el layout del panel y la pagina que renderiza
+ * adentro piden la sesion por separado, y sin esto cada navegacion hacia dos
+ * viajes identicos al servidor de auth. Con el cache, el segundo reusa el
+ * resultado del primero dentro del mismo request.
+ */
+export const obtenerUsuario = cache(
+  async (): Promise<{ supabase: SupabaseClient; usuario: User | null }> => {
+    const supabase = await crearClienteServidor();
+    const { data } = await supabase.auth.getUser();
+    return { supabase, usuario: data.user ?? null };
+  },
+);
 
 /** Para paginas: si no hay sesion, manda al login conservando el destino. */
 export async function requerirUsuarioEnPagina(destino: string): Promise<Sesion> {
@@ -32,11 +42,13 @@ export async function requerirUsuarioEnPagina(destino: string): Promise<Sesion> 
 /**
  * Barberia administrada por el usuario. La consulta pasa por RLS, con lo cual
  * solo puede devolver tenants donde el usuario es miembro.
+ *
+ * Tambien cacheada por request, por el mismo motivo que `obtenerUsuario`.
  */
-export async function obtenerTenantDelUsuario(
+export const obtenerTenantDelUsuario = cache(async (
   supabase: SupabaseClient,
   usuarioId: string,
-): Promise<Tenant | null> {
+): Promise<Tenant | null> => {
   const { data, error } = await supabase
     .from("tenant_members")
     .select("tenant_id, tenants(id, slug, nombre, direccion, telefono, activo)")
@@ -48,7 +60,7 @@ export async function obtenerTenantDelUsuario(
   const tenant = (data as { tenants: Tenant | Tenant[] | null }).tenants;
   if (!tenant) return null;
   return Array.isArray(tenant) ? (tenant[0] ?? null) : tenant;
-}
+});
 
 /** Panel: exige sesion + barberia. Si no tiene barberia, va al alta. */
 export async function requerirPanel(destino: string): Promise<Sesion & { tenant: Tenant }> {

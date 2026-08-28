@@ -41,12 +41,23 @@ export default async function PaginaCaja({
   const anterior = mes === 1 ? `${anio - 1}-12` : `${anio}-${String(mes - 1).padStart(2, "0")}`;
   const siguiente = mes === 12 ? `${anio + 1}-01` : `${anio}-${String(mes + 1).padStart(2, "0")}`;
 
-  const { data: turnos } = await supabase
-    .from("appointments")
-    .select("id, estado, medio_pago, total_cent")
-    .eq("tenant_id", tenant.id)
-    .gte("fecha", desde)
-    .lte("fecha", hasta);
+  // Las dos consultas del mes no dependen entre si: van juntas.
+  const [{ data: turnos }, { data: lineas }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("id, estado, medio_pago, total_cent")
+      .eq("tenant_id", tenant.id)
+      .gte("fecha", desde)
+      .lte("fecha", hasta),
+    // Que se vendio en el mes, sumando servicio reservado y adicionales.
+    supabase
+      .from("appointment_services")
+      .select("nombre, precio_cent, principal, appointments!inner(fecha, estado)")
+      .eq("tenant_id", tenant.id)
+      .eq("appointments.estado", "completado")
+      .gte("appointments.fecha", desde)
+      .lte("appointments.fecha", hasta),
+  ]);
 
   const filas = turnos ?? [];
   const completados = filas.filter((t) => t.estado === "completado");
@@ -65,15 +76,6 @@ export default async function PaginaCaja({
       porcentaje: totalCobrado > 0 ? Math.round((monto / totalCobrado) * 100) : 0,
     };
   });
-
-  // Que se vendio en el mes, sumando servicio reservado y adicionales.
-  const { data: lineas } = await supabase
-    .from("appointment_services")
-    .select("nombre, precio_cent, principal, appointments!inner(fecha, estado)")
-    .eq("tenant_id", tenant.id)
-    .eq("appointments.estado", "completado")
-    .gte("appointments.fecha", desde)
-    .lte("appointments.fecha", hasta);
 
   const porServicio = new Map<string, number>();
   let montoAdicionales = 0;

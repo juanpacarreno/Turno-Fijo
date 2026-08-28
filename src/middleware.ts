@@ -76,5 +76,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Se excluye /api a proposito: cada route handler valida sesion y
+  // pertenencia al tenant por su cuenta, con lo cual pasar por el middleware
+  // solo agregaba un viaje al servidor de auth en cada llamada.
+  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico).*)"],
 };

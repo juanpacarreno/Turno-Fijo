@@ -51,23 +51,26 @@ export default async function PaginaAgenda({
   const hoy = hoyEnZona();
   const fecha = fechaISO.safeParse(params.fecha).success ? (params.fecha as string) : hoy;
 
+  // Las dos consultas son independientes: van en paralelo para no encadenar
+  // dos viajes a la base en cada navegacion.
   // RLS ya limita a la barberia del usuario; el filtro explicito queda igual.
-  const { data: turnosCrudos } = await supabase
-    .from("appointments")
-    .select(
-      "id, codigo, hora_desde, hora_hasta, estado, total_cent, barbers(nombre), clients(nombre), appointment_services(nombre, principal, precio_cent)",
-    )
-    .eq("tenant_id", tenant.id)
-    .eq("fecha", fecha)
-    .order("hora_desde", { ascending: true });
+  const [{ data: turnosCrudos }, { data: barberos }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select(
+        "id, codigo, hora_desde, hora_hasta, estado, total_cent, barbers(nombre), clients(nombre), appointment_services(nombre, principal, precio_cent)",
+      )
+      .eq("tenant_id", tenant.id)
+      .eq("fecha", fecha)
+      .order("hora_desde", { ascending: true }),
+    supabase
+      .from("barbers")
+      .select("id, nombre, dias_trabajo, hora_desde, hora_hasta")
+      .eq("tenant_id", tenant.id)
+      .eq("activo", true),
+  ]);
 
   const turnos = (turnosCrudos ?? []) as unknown as FilaTurno[];
-
-  const { data: barberos } = await supabase
-    .from("barbers")
-    .select("id, nombre, dias_trabajo, hora_desde, hora_hasta")
-    .eq("tenant_id", tenant.id)
-    .eq("activo", true);
 
   const cobrado = turnos
     .filter((t) => t.estado === "completado")

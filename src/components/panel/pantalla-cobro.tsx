@@ -265,7 +265,11 @@ export function PantallaCobro({
                   onClick={() => setMedio(m)}
                   aria-pressed={medio === m}
                   className={cn(
-                    "h-11 border text-xs uppercase tracking-etiqueta transition-colors",
+                    // Tipografia mas chica y menos espaciada que el resto de las
+                    // etiquetas: "TRANSFERENCIA" no entra a un tercio del ancho
+                    // con el tracking habitual.
+                    "flex h-12 items-center justify-center whitespace-nowrap border px-1",
+                    "text-[10px] uppercase leading-tight tracking-[0.06em] transition-colors",
                     medio === m
                       ? "border-oro bg-oro/15 text-oro"
                       : "border-linea text-ceniza hover:text-crema",

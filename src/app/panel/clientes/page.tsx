@@ -23,17 +23,15 @@ export const dynamic = "force-dynamic";
 export default async function PaginaClientes() {
   const { supabase, tenant } = await requerirPanel("/panel/clientes");
 
-  const { data: clientes } = await supabase
-    .from("clients")
-    .select("id, nombre, email, creado_en")
-    .eq("tenant_id", tenant.id)
-    .order("creado_en", { ascending: false })
-    .limit(200);
-
-  const { data: turnos } = await supabase
-    .from("appointments")
-    .select("client_id, estado")
-    .eq("tenant_id", tenant.id);
+  const [{ data: clientes }, { data: turnos }] = await Promise.all([
+    supabase
+      .from("clients")
+      .select("id, nombre, email, creado_en")
+      .eq("tenant_id", tenant.id)
+      .order("creado_en", { ascending: false })
+      .limit(200),
+    supabase.from("appointments").select("client_id, estado").eq("tenant_id", tenant.id),
+  ]);
 
   const conteo = new Map<string, { visitas: number; ausencias: number }>();
   for (const t of turnos ?? []) {
