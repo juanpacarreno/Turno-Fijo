@@ -1,4 +1,4 @@
-import { obtenerUsuario, obtenerTenantDelUsuario } from "@/lib/sesion";
+import { obtenerUsuario, obtenerMembresia } from "@/lib/sesion";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { esquemaAltaBarberia } from "@/lib/validacion";
 import { LIMITES } from "@/lib/rate-limit";
@@ -23,9 +23,9 @@ export async function POST(request: Request) {
 
   const { supabase } = await obtenerUsuario();
 
-  // Un usuario administra una sola barberia.
-  const yaTiene = await obtenerTenantDelUsuario(supabase, usuario.id);
-  if (yaTiene) return error("Ya tenes una barberia registrada.", 409);
+  // Un usuario pertenece a una sola barberia, sea como dueno o como barbero.
+  const yaTiene = await obtenerMembresia(supabase, usuario.id);
+  if (yaTiene) return error("Ya estas asociado a una barberia.", 409);
 
   const admin = crearClienteAdmin();
 

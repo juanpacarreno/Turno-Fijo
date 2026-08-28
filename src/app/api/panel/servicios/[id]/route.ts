@@ -8,7 +8,7 @@ import { aplicarLimite, error, leerBody, ok, NO_ENCONTRADO, ERROR_INTERNO, regis
  * proposito: si manana alguien afloja una politica, el filtro sigue puesto.
  */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const ctx = await contextoPanel();
+  const ctx = await contextoPanel(true);
   if (ctx.respuesta) return ctx.respuesta;
 
   const cortado = aplicarLimite(request, "panel-servicios", LIMITES.panel, ctx.usuario.id);
@@ -49,7 +49,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 /** Baja logica: el historial de caja necesita el servicio, no se borra. */
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const ctx = await contextoPanel();
+  const ctx = await contextoPanel(true);
   if (ctx.respuesta) return ctx.respuesta;
 
   const cortado = aplicarLimite(request, "panel-servicios", LIMITES.panel, ctx.usuario.id);

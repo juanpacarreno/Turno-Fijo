@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Marca } from "@/components/marca";
 import { CerrarSesion } from "@/components/cerrar-sesion";
 import { FormularioAlta } from "@/components/formulario-alta";
-import { requerirUsuarioEnPagina, obtenerTenantDelUsuario } from "@/lib/sesion";
+import { requerirUsuarioEnPagina, obtenerMembresia } from "@/lib/sesion";
 import { env } from "@/lib/env";
 
 export const metadata = { title: "Registrar barberia - Turno Fijo" };
@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 export default async function PaginaRegistrar() {
   const { supabase, usuario } = await requerirUsuarioEnPagina("/registrar");
 
-  // Un usuario administra una sola barberia.
-  const tenant = await obtenerTenantDelUsuario(supabase, usuario.id);
-  if (tenant) redirect("/panel");
+  // Un usuario pertenece a una sola barberia, sea como dueno o como barbero.
+  const membresia = await obtenerMembresia(supabase, usuario.id);
+  if (membresia) redirect("/panel");
 
   const sitio = env.siteUrl().replace(/^https?:\/\//, "");
 

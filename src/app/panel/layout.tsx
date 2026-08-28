@@ -11,7 +11,8 @@ import { requerirPanel } from "@/lib/sesion";
  * Mobile: encabezado compacto y barra inferior de navegacion.
  */
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
-  const { tenant, usuario } = await requerirPanel("/panel");
+  const { tenant, usuario, rol } = await requerirPanel("/panel");
+  const esDuenio = rol === "dueno";
 
   return (
     <div className="min-h-dvh lg:flex">
@@ -21,22 +22,24 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <Marca compacto />
         </div>
         <div className="px-4 py-4">
-          <p className="etiqueta">Barberia</p>
+          <p className="etiqueta">{esDuenio ? "Barberia" : "Trabajas en"}</p>
           <p className="mt-1 truncate text-sm text-crema" title={tenant.nombre}>
             {tenant.nombre}
           </p>
         </div>
         <div className="border-y border-linea py-2">
-          <NavLateral />
+          <NavLateral esDuenio={esDuenio} />
         </div>
         <div className="mt-auto border-t border-linea p-4">
-          <Link
-            href={`/b/${tenant.slug}`}
-            className="mb-3 flex items-center gap-2 text-xs text-ceniza transition-colors hover:text-oro"
-          >
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-            Ver pagina de reservas
-          </Link>
+          {esDuenio ? (
+            <Link
+              href={`/b/${tenant.slug}`}
+              className="mb-3 flex items-center gap-2 text-xs text-ceniza transition-colors hover:text-oro"
+            >
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+              Ver pagina de reservas
+            </Link>
+          ) : null}
           <p className="truncate font-mono text-[11px] text-ceniza" title={usuario.email ?? ""}>
             {usuario.email}
           </p>
@@ -55,7 +58,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
 
       <main className="min-w-0 flex-1 pb-16 lg:pb-0">{children}</main>
 
-      <NavInferior />
+      <NavInferior esDuenio={esDuenio} />
     </div>
   );
 }

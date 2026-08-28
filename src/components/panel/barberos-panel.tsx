@@ -28,12 +28,19 @@ export type BarberoFila = {
   hora_desde: string;
   hora_hasta: string;
   activo: boolean;
+  /** Cuenta vinculada. Null mientras el barbero no entro por primera vez. */
+  user_id: string | null;
+  /** Correo invitado, pendiente de que esa persona entre con Google. */
+  email_invitacion: string | null;
 };
 
 type Borrador = {
   id: string | null;
   nombre: string;
   descripcion: string;
+  email: string;
+  /** Ya tiene cuenta vinculada: la invitacion deja de ser editable. */
+  vinculado: boolean;
   dias: number[];
   horaDesde: string;
   horaHasta: string;
@@ -44,6 +51,8 @@ const BORRADOR_VACIO: Borrador = {
   id: null,
   nombre: "",
   descripcion: "",
+  email: "",
+  vinculado: false,
   dias: [2, 3, 4, 5, 6],
   horaDesde: "10:00",
   horaHasta: "20:00",
@@ -69,6 +78,8 @@ export function BarberosPanel({ barberos }: { barberos: BarberoFila[] }) {
       id: b.id,
       nombre: b.nombre,
       descripcion: b.descripcion ?? "",
+      email: b.email_invitacion ?? "",
+      vinculado: Boolean(b.user_id),
       dias: b.dias_trabajo,
       horaDesde: hhmm(b.hora_desde),
       horaHasta: hhmm(b.hora_hasta),
@@ -102,6 +113,8 @@ export function BarberosPanel({ barberos }: { barberos: BarberoFila[] }) {
         body: JSON.stringify({
           nombre: borrador.nombre,
           descripcion: borrador.descripcion,
+          // Si ya tiene cuenta, no se manda el correo: no hay nada que invitar.
+          ...(borrador.vinculado ? {} : { email: borrador.email }),
           diasTrabajo: borrador.dias,
           horaDesde: borrador.horaDesde,
           horaHasta: borrador.horaHasta,
@@ -184,10 +197,23 @@ export function BarberosPanel({ barberos }: { barberos: BarberoFila[] }) {
                 ))}
               </div>
 
+              <p className="mt-4 border-t border-linea pt-3 text-xs text-ceniza">
+                {b.user_id ? (
+                  <span className="text-navaja">Cuenta vinculada</span>
+                ) : b.email_invitacion ? (
+                  <>
+                    Invitado: <span className="font-mono">{b.email_invitacion}</span>
+                    <span className="mt-0.5 block">Falta que entre con Google.</span>
+                  </>
+                ) : (
+                  "Sin cuenta. No puede entrar a la app."
+                )}
+              </p>
+
               <Button
                 variant="contorno"
                 size="sm"
-                className="mt-4 w-full"
+                className="mt-3 w-full"
                 onClick={() => abrirEdicion(b)}
               >
                 <Pencil aria-hidden="true" />
@@ -228,6 +254,34 @@ export function BarberosPanel({ barberos }: { barberos: BarberoFila[] }) {
                 onChange={(e) => setBorrador({ ...borrador, descripcion: e.target.value })}
                 placeholder="Clasicos y barba a navaja"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email-barbero">Correo para que entre a la app (opcional)</Label>
+              {borrador.vinculado ? (
+                <p className="flex h-11 items-center border border-linea bg-grafito px-3 text-sm text-navaja">
+                  Ya tiene su cuenta vinculada
+                </p>
+              ) : (
+                <>
+                  <Input
+                    id="email-barbero"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="off"
+                    value={borrador.email}
+                    maxLength={254}
+                    onChange={(e) => setBorrador({ ...borrador, email: e.target.value })}
+                    placeholder="barbero@gmail.com"
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-xs leading-relaxed text-ceniza">
+                    Tiene que ser la cuenta de Google con la que va a entrar. Va a ver solo
+                    sus turnos y va a poder cobrarlos: no accede a la caja, a los precios ni
+                    al resto de los barberos.
+                  </p>
+                </>
+              )}
             </div>
 
             <fieldset>

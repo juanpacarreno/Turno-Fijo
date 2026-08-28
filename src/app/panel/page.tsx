@@ -45,7 +45,7 @@ export default async function PaginaAgenda({
 }: {
   searchParams: Promise<{ fecha?: string }>;
 }) {
-  const { supabase, tenant } = await requerirPanel("/panel");
+  const { supabase, tenant, rol, barberoId } = await requerirPanel("/panel");
   const params = await searchParams;
 
   const hoy = hoyEnZona();
@@ -63,11 +63,19 @@ export default async function PaginaAgenda({
       .eq("tenant_id", tenant.id)
       .eq("fecha", fecha)
       .order("hora_desde", { ascending: true }),
-    supabase
-      .from("barbers")
-      .select("id, nombre, dias_trabajo, hora_desde, hora_hasta")
-      .eq("tenant_id", tenant.id)
-      .eq("activo", true),
+    // Un barbero mide su ocupacion contra su propio horario, no contra el
+    // del salon entero.
+    (rol === "barbero" && barberoId
+      ? supabase
+          .from("barbers")
+          .select("id, nombre, dias_trabajo, hora_desde, hora_hasta")
+          .eq("tenant_id", tenant.id)
+          .eq("id", barberoId)
+      : supabase
+          .from("barbers")
+          .select("id, nombre, dias_trabajo, hora_desde, hora_hasta")
+          .eq("tenant_id", tenant.id)
+          .eq("activo", true)),
   ]);
 
   const turnos = (turnosCrudos ?? []) as unknown as FilaTurno[];
@@ -157,11 +165,17 @@ export default async function PaginaAgenda({
         <Vacio
           className="mt-6"
           titulo="No hay turnos para este dia"
-          detalle="Cuando alguien reserve desde la pagina publica va a aparecer aca, ordenado por hora."
+          detalle={
+            rol === "barbero"
+              ? "Cuando te reserven un turno para este dia lo vas a ver aca, ordenado por hora."
+              : "Cuando alguien reserve desde la pagina publica va a aparecer aca, ordenado por hora."
+          }
         >
-          <Button asChild variant="contorno" size="sm">
-            <Link href={`/b/${tenant.slug}`}>Ver pagina de reservas</Link>
-          </Button>
+          {rol === "dueno" ? (
+            <Button asChild variant="contorno" size="sm">
+              <Link href={`/b/${tenant.slug}`}>Ver pagina de reservas</Link>
+            </Button>
+          ) : null}
         </Vacio>
       ) : (
         <>

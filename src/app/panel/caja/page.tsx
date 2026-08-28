@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { requerirPanel } from "@/lib/sesion";
+import { requerirDuenio } from "@/lib/sesion";
 import { pesos, hoyEnZona, nombreMes } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +30,7 @@ export default async function PaginaCaja({
 }: {
   searchParams: Promise<{ mes?: string }>;
 }) {
-  const { supabase, tenant } = await requerirPanel("/panel/caja");
+  const { supabase, tenant } = await requerirDuenio("/panel/caja");
   const params = await searchParams;
 
   const hoy = hoyEnZona();

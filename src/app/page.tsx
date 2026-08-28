@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Marca } from "@/components/marca";
 import { Button } from "@/components/ui/button";
-import { obtenerUsuario, obtenerTenantDelUsuario } from "@/lib/sesion";
+import { obtenerUsuario, obtenerMembresia } from "@/lib/sesion";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export default async function PaginaInicio({
   }
 
   const { supabase, usuario } = await obtenerUsuario();
-  const tenant = usuario ? await obtenerTenantDelUsuario(supabase, usuario.id) : null;
+  const membresia = usuario ? await obtenerMembresia(supabase, usuario.id) : null;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-10 lg:py-16">
@@ -47,8 +47,8 @@ export default async function PaginaInicio({
         <nav className="flex items-center gap-2">
           {usuario ? (
             <Button asChild variant="contorno" size="sm">
-              <Link href={tenant ? "/panel" : "/registrar"}>
-                {tenant ? "Ir al panel" : "Registrar barberia"}
+              <Link href={membresia ? "/panel" : "/registrar"}>
+                {membresia ? "Ir al panel" : "Registrar barberia"}
               </Link>
             </Button>
           ) : (
@@ -72,8 +72,8 @@ export default async function PaginaInicio({
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link href={usuario ? (tenant ? "/panel" : "/registrar") : "/ingresar?next=/registrar"}>
-              {tenant ? "Ir a mi panel" : "Registrar mi barberia"}
+            <Link href={usuario ? (membresia ? "/panel" : "/registrar") : "/ingresar?next=/registrar"}>
+              {membresia ? "Ir a mi panel" : "Registrar mi barberia"}
             </Link>
           </Button>
           {usuario ? (

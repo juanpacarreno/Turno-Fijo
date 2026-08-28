@@ -2,7 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import type { Tenant } from "@/lib/tipos";
+import type { RolMiembro, Tenant } from "@/lib/tipos";
 
 /**
  * Guards de sesion y de pertenencia al tenant.
@@ -39,35 +39,68 @@ export async function requerirUsuarioEnPagina(destino: string): Promise<Sesion> 
   return { supabase, usuario };
 }
 
+export type Membresia = {
+  tenant: Tenant;
+  rol: RolMiembro;
+  /** Ficha de barbero vinculada, solo cuando el rol es "barbero". */
+  barberoId: string | null;
+};
+
 /**
- * Barberia administrada por el usuario. La consulta pasa por RLS, con lo cual
- * solo puede devolver tenants donde el usuario es miembro.
+ * Barberia del usuario y con que rol la administra. La consulta pasa por RLS,
+ * con lo cual solo puede devolver tenants donde el usuario es miembro.
  *
- * Tambien cacheada por request, por el mismo motivo que `obtenerUsuario`.
+ * Cacheada por request, por el mismo motivo que `obtenerUsuario`.
  */
-export const obtenerTenantDelUsuario = cache(async (
+export const obtenerMembresia = cache(async (
   supabase: SupabaseClient,
   usuarioId: string,
-): Promise<Tenant | null> => {
+): Promise<Membresia | null> => {
   const { data, error } = await supabase
     .from("tenant_members")
-    .select("tenant_id, tenants(id, slug, nombre, direccion, telefono, activo)")
+    .select("rol, tenants(id, slug, nombre, direccion, telefono, activo)")
+    // Si alguien llegara a tener dos membresias, manda la mas antigua.
     .eq("user_id", usuarioId)
+    .order("creado_en", { ascending: true })
     .limit(1)
     .maybeSingle();
 
   if (error || !data) return null;
-  const tenant = (data as { tenants: Tenant | Tenant[] | null }).tenants;
+
+  const crudo = data as { rol: RolMiembro; tenants: Tenant | Tenant[] | null };
+  const tenant = Array.isArray(crudo.tenants) ? (crudo.tenants[0] ?? null) : crudo.tenants;
   if (!tenant) return null;
-  return Array.isArray(tenant) ? (tenant[0] ?? null) : tenant;
+
+  let barberoId: string | null = null;
+  if (crudo.rol === "barbero") {
+    const { data: ficha } = await supabase
+      .from("barbers")
+      .select("id")
+      .eq("tenant_id", tenant.id)
+      .eq("user_id", usuarioId)
+      .maybeSingle();
+    barberoId = (ficha?.id as string | undefined) ?? null;
+  }
+
+  return { tenant, rol: crudo.rol, barberoId };
 });
 
 /** Panel: exige sesion + barberia. Si no tiene barberia, va al alta. */
-export async function requerirPanel(destino: string): Promise<Sesion & { tenant: Tenant }> {
+export async function requerirPanel(destino: string): Promise<Sesion & Membresia> {
   const { supabase, usuario } = await requerirUsuarioEnPagina(destino);
-  const tenant = await obtenerTenantDelUsuario(supabase, usuario.id);
-  if (!tenant) redirect("/registrar");
-  return { supabase, usuario, tenant };
+  const membresia = await obtenerMembresia(supabase, usuario.id);
+  if (!membresia) redirect("/registrar");
+  return { supabase, usuario, ...membresia };
+}
+
+/**
+ * Secciones reservadas al dueno (caja, precios, barberos, clientes). Un
+ * barbero que llegue por URL vuelve a su agenda.
+ */
+export async function requerirDuenio(destino: string): Promise<Sesion & Membresia> {
+  const sesion = await requerirPanel(destino);
+  if (sesion.rol !== "dueno") redirect("/panel");
+  return sesion;
 }
 
 /**

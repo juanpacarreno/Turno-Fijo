@@ -1,4 +1,4 @@
-import { requerirPanel } from "@/lib/sesion";
+import { requerirDuenio } from "@/lib/sesion";
 import { Vacio } from "@/components/vacio";
 import { fechaCorta } from "@/lib/format";
 import {
@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
  * nunca cruza datos entre salones.
  */
 export default async function PaginaClientes() {
-  const { supabase, tenant } = await requerirPanel("/panel/clientes");
+  const { supabase, tenant } = await requerirDuenio("/panel/clientes");
 
   const [{ data: clientes }, { data: turnos }] = await Promise.all([
     supabase

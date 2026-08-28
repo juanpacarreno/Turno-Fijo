@@ -6,7 +6,7 @@ import { horaAMinutos } from "@/lib/format";
 
 /** Alta de un barbero del salon. */
 export async function POST(request: Request) {
-  const ctx = await contextoPanel();
+  const ctx = await contextoPanel(true);
   if (ctx.respuesta) return ctx.respuesta;
 
   const cortado = aplicarLimite(request, "panel-barberos", LIMITES.panel, ctx.usuario.id);
@@ -31,8 +31,11 @@ export async function POST(request: Request) {
       hora_desde: datos.horaDesde,
       hora_hasta: datos.horaHasta,
       activo: datos.activo,
+      // Invitacion: al entrar con Google con ese correo, el barbero queda
+      // vinculado a esta ficha (ver funcion aceptar_invitaciones).
+      email_invitacion: datos.email ?? null,
     })
-    .select("id, nombre, descripcion, dias_trabajo, hora_desde, hora_hasta, activo")
+    .select("id, nombre, descripcion, dias_trabajo, hora_desde, hora_hasta, activo, user_id, email_invitacion")
     .single();
 
   if (falla || !data) {

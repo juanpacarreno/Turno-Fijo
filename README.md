@@ -17,9 +17,13 @@ Level Security en Postgres, no sólo por filtros de aplicación.
 ### 1.1 Crear el proyecto de Supabase
 
 1. Creá un proyecto en [supabase.com](https://supabase.com).
-2. En **SQL Editor**, pegá y ejecutá el contenido de
-   [`supabase/migrations/20260826000001_esquema_inicial.sql`](supabase/migrations/20260826000001_esquema_inicial.sql).
-   Crea tablas, triggers, funciones y **todas las políticas de RLS**.
+2. En **SQL Editor**, pegá y ejecutá las migraciones de `supabase/migrations/`
+   **en orden**:
+   - [`20260826000001_esquema_inicial.sql`](supabase/migrations/20260826000001_esquema_inicial.sql)
+     — tablas, triggers, funciones y todas las políticas de RLS.
+   - [`20260827000002_cuentas_de_barbero.sql`](supabase/migrations/20260827000002_cuentas_de_barbero.sql)
+     — roles dueño/barbero, invitación por correo y políticas por rol.
+
    (Con la CLI: `supabase db push`.)
 3. En **Project Settings → API** copiá `URL`, `anon key` y `service_role key`.
 
@@ -156,6 +160,34 @@ Google → recibe el comprobante en pantalla y por correo.
 **En el salón**: el barbero abre el turno desde la agenda, tilda los adicionales
 que se hicieron, elige efectivo / transferencia / tarjeta y cobra. El total sale
 de la suma de los servicios; también puede marcar *no vino* o cancelar.
+
+### Cuentas de barbero
+
+Hay dos roles, guardados en `tenant_members.rol`:
+
+| | Dueño | Barbero |
+| --- | --- | --- |
+| Agenda | Todo el salón | **Sólo sus propios turnos** |
+| Cobrar, adicionales, no vino | Sí | Sí, en sus turnos |
+| Fichas de cliente | Todas las del salón | Sólo las de quienes atiende |
+| Caja del mes | Sí | No |
+| Precios y servicios | Sí | No (los lee para cargar adicionales) |
+| Barberos | Sí | No |
+| Página pública de reservas | Sí | No |
+
+**Cómo invitar a un barbero:** en *Barberos*, al crear o editar la ficha, cargá
+el **correo de Google** con el que esa persona va a entrar. La ficha queda como
+*Invitado*. Cuando esa persona entra a la app con Google, su cuenta se vincula
+sola a esa ficha y pasa a ver su agenda. La verificación se hace contra el
+correo del token de Google, nunca contra algo que mande el navegador.
+
+Conviene invitar **antes** de que la persona entre por primera vez: si entra sin
+invitación pendiente, la app la va a llevar a registrar su propia barbería.
+
+Limitaciones conocidas hoy: no hay pantalla para revocar el acceso de un barbero
+ya vinculado (se hace poniendo `barbers.user_id` en `null` y borrando su fila de
+`tenant_members`), y un barbero puede leer por API el correo de invitación
+pendiente de un compañero del mismo salón.
 
 **Caja**: `/panel/caja` muestra el mes por medio de pago sobre lo realmente
 cobrado, turnos completados, ausencias, cancelados, ticket promedio, cuánto

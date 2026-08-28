@@ -6,23 +6,28 @@ import { CalendarDays, Scissors, Wallet, Users, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SECCIONES = [
-  { href: "/panel", etiqueta: "Agenda", Icono: CalendarDays },
-  { href: "/panel/servicios", etiqueta: "Servicios", Icono: Scissors },
-  { href: "/panel/caja", etiqueta: "Caja", Icono: Wallet },
-  { href: "/panel/clientes", etiqueta: "Clientes", Icono: Users },
-  { href: "/panel/barberos", etiqueta: "Barberos", Icono: UserRound },
+  { href: "/panel", etiqueta: "Agenda", Icono: CalendarDays, soloDuenio: false },
+  { href: "/panel/servicios", etiqueta: "Servicios", Icono: Scissors, soloDuenio: true },
+  { href: "/panel/caja", etiqueta: "Caja", Icono: Wallet, soloDuenio: true },
+  { href: "/panel/clientes", etiqueta: "Clientes", Icono: Users, soloDuenio: true },
+  { href: "/panel/barberos", etiqueta: "Barberos", Icono: UserRound, soloDuenio: true },
 ];
+
+/** El barbero solo tiene su agenda; el resto es del dueno. */
+function seccionesVisibles(esDuenio: boolean) {
+  return SECCIONES.filter((s) => esDuenio || !s.soloDuenio);
+}
 
 function esActiva(ruta: string, href: string) {
   return href === "/panel" ? ruta === "/panel" : ruta.startsWith(href);
 }
 
 /** Columna de navegacion del panel en desktop. */
-export function NavLateral() {
+export function NavLateral({ esDuenio }: { esDuenio: boolean }) {
   const ruta = usePathname();
   return (
     <nav aria-label="Secciones del panel" className="flex flex-col">
-      {SECCIONES.map(({ href, etiqueta, Icono }) => {
+      {seccionesVisibles(esDuenio).map(({ href, etiqueta, Icono }) => {
         const activa = esActiva(ruta, href);
         return (
           <Link
@@ -51,15 +56,19 @@ export function NavLateral() {
  * Barra inferior en mobile: cinco destinos, area tactil de 56px, sin scroll
  * horizontal ni menus escondidos.
  */
-export function NavInferior() {
+export function NavInferior({ esDuenio }: { esDuenio: boolean }) {
   const ruta = usePathname();
+  const visibles = seccionesVisibles(esDuenio);
   return (
     <nav
       aria-label="Secciones del panel"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-linea bg-carbon lg:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="fixed inset-x-0 bottom-0 z-40 grid border-t border-linea bg-carbon lg:hidden"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)",
+        gridTemplateColumns: `repeat(${visibles.length}, minmax(0, 1fr))`,
+      }}
     >
-      {SECCIONES.map(({ href, etiqueta, Icono }) => {
+      {visibles.map(({ href, etiqueta, Icono }) => {
         const activa = esActiva(ruta, href);
         return (
           <Link

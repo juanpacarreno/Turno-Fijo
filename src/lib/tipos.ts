@@ -1,5 +1,6 @@
 export type EstadoTurno = "reservado" | "completado" | "cancelado" | "no_asistio";
 export type MedioPago = "efectivo" | "transferencia" | "tarjeta";
+export type RolMiembro = "dueno" | "barbero";
 
 export type Tenant = {
   id: string;

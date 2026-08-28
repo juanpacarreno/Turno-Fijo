@@ -120,9 +120,19 @@ export const esquemaAltaBarberia = z.object({
   telefono,
 });
 
+/** Correo de invitacion: opcional, normalizado a minusculas. */
+export const correoOpcional = z.preprocess(
+  (v) => {
+    const limpio = sanearTexto(v).toLowerCase();
+    return limpio === "" ? undefined : limpio;
+  },
+  z.string().email("Correo invalido").max(254).optional(),
+);
+
 export const esquemaBarbero = z.object({
   nombre: textoCorto(2, 60),
   descripcion: textoOpcional(120),
+  email: correoOpcional,
   diasTrabajo: z.array(z.number().int().min(0).max(6)).min(1, "Elegi al menos un dia").max(7),
   horaDesde: horaHHMM,
   horaHasta: horaHHMM,

@@ -47,6 +47,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/ingresar?error=sesion", url.origin));
   }
 
+  // Si alguien invito a esta persona como barbero cargando su correo, aca
+  // queda vinculada su ficha y se le crea la membresia. La funcion compara
+  // contra el correo del token, no contra algo que mande el navegador.
+  const { error: fallaInvitacion } = await supabase.rpc("aceptar_invitaciones");
+  if (fallaInvitacion) {
+    console.error("[auth] no se pudieron procesar las invitaciones pendientes");
+  }
+
   const respuesta = NextResponse.redirect(new URL(destino, url.origin));
   respuesta.cookies.delete("tf-destino");
   return respuesta;

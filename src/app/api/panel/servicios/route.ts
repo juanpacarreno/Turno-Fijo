@@ -5,7 +5,7 @@ import { aplicarLimite, leerBody, ok, ERROR_INTERNO, registrarFalla } from "@/li
 
 /** Alta de un servicio del catalogo de la barberia. */
 export async function POST(request: Request) {
-  const ctx = await contextoPanel();
+  const ctx = await contextoPanel(true);
   if (ctx.respuesta) return ctx.respuesta;
 
   const cortado = aplicarLimite(request, "panel-servicios", LIMITES.panel, ctx.usuario.id);

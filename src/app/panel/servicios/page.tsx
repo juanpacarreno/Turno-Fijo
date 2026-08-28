@@ -1,11 +1,11 @@
-import { requerirPanel } from "@/lib/sesion";
+import { requerirDuenio } from "@/lib/sesion";
 import { ServiciosPanel, type ServicioFila } from "@/components/panel/servicios-panel";
 
 export const metadata = { title: "Servicios - Turno Fijo" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaServicios() {
-  const { supabase, tenant } = await requerirPanel("/panel/servicios");
+  const { supabase, tenant } = await requerirDuenio("/panel/servicios");
 
   const { data } = await supabase
     .from("services")
