@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Marca } from "@/components/marca";
 import { Button } from "@/components/ui/button";
 import { obtenerUsuario, obtenerTenantDelUsuario } from "@/lib/sesion";
@@ -23,7 +24,19 @@ const CAPACIDADES = [
   },
 ];
 
-export default async function PaginaInicio() {
+export default async function PaginaInicio({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  // Red de contencion: si Supabase no reconoce la URL de retorno, redirige al
+  // Site URL con el codigo pegado. Antes eso dejaba al visitante en la portada
+  // y sin sesion; ahora se completa el ingreso.
+  const params = await searchParams;
+  if (params.code && /^[A-Za-z0-9._~-]{8,512}$/.test(params.code)) {
+    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}`);
+  }
+
   const { supabase, usuario } = await obtenerUsuario();
   const tenant = usuario ? await obtenerTenantDelUsuario(supabase, usuario.id) : null;
 

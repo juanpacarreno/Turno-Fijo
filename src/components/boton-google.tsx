@@ -25,10 +25,18 @@ export function BotonGoogle({
     try {
       const supabase = crearClienteNavegador();
       const destino = rutaInternaSegura(next, "/");
+
+      // El destino viaja en una cookie de vida corta, no en la query.
+      // Supabase compara la URL de retorno COMPLETA contra su lista blanca:
+      // con un `?next=...` pegado no matchea y cae en el Site URL, dejando al
+      // usuario en la portada sin sesion.
+      const seguro = window.location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `tf-destino=${encodeURIComponent(destino)}; Path=/; Max-Age=600; SameSite=Lax${seguro}`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destino)}`,
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: { prompt: "select_account" },
         },
       });

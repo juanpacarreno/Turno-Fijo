@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { rutaInternaSegura } from "@/lib/validacion";
 import { limitar, ipDeRequest } from "@/lib/rate-limit";
@@ -14,7 +15,16 @@ import { LIMITES } from "@/lib/rate-limit";
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const codigo = url.searchParams.get("code");
-  const destino = rutaInternaSegura(url.searchParams.get("next"), "/panel");
+
+  // El destino lo dejo el boton de ingreso en una cookie propia (ver
+  // components/boton-google.tsx). Se acepta tambien por query para no romper
+  // enlaces viejos, pero la URL de retorno registrada en Supabase no la lleva.
+  const almacen = await cookies();
+  const guardado = almacen.get("tf-destino")?.value;
+  const destino = rutaInternaSegura(
+    url.searchParams.get("next") ?? (guardado ? decodeURIComponent(guardado) : null),
+    "/panel",
+  );
 
   const limite = limitar(
     `login:${ipDeRequest(request)}`,
@@ -37,5 +47,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/ingresar?error=sesion", url.origin));
   }
 
-  return NextResponse.redirect(new URL(destino, url.origin));
+  const respuesta = NextResponse.redirect(new URL(destino, url.origin));
+  respuesta.cookies.delete("tf-destino");
+  return respuesta;
 }
